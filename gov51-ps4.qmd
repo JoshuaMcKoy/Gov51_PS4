@@ -30,4 +30,50 @@ card <- read_csv("data/raw/card1995.csv")
 nrow(card)
 ```
 
-There are 3,010 observations in the dataset. The unit of observation are individuals
+There are 3,010 observations in the dataset. The unit of observation are individuals.
+
+## 1.3 Distribution of years of education
+
+**Create a histogram of educ. What is the mean? Are there any unusual spikes? What might explain them?**
+
+```{r}
+library(ggplot2)
+
+ggplot(card, aes(x = educ)) +
+  geom_histogram(binwidth = 1, fill = "pink", color = "black") +
+  labs(title = "Distribution of Years of Education",
+       x = "Years of Education",
+       y = "Number of Respondents") +
+  theme_minimal()
+
+mean(card$educ, na.rm = TRUE)
+```
+
+The mean years of education in the sample is 13.26 years, with large spikes at 12 (high school diploma) and 16 years (undergraduate college diploma). I think this is because the data reflects major educational milestones in society.
+
+## 1.4 The naïve relationship
+
+**Create a scatter plot of lwage (y-axis) against educ (x-axis). Add a linear regression line.
+Based on this plot, does more education appear to be associated with higher wages?**
+
+```{r}
+ggplot(card, aes(x = educ, y = lwage)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "lm", se = FALSE, color = "pink") +
+  labs(title = "Log Wages vs. Years of Education",
+       x = "Years of Education",
+       y = "Log Wage") +
+  theme_minimal()
+```
+
+Given that log wage seems to increase as years of education increases, the scatter plot shows a positive relationship between years of education and log wages. Although there is some variation in wages at each level of education, the fitted regression line slopes upward, suggesting that individuals with more education tend to have higher wages.
+
+## 1.5 Why OLS might be misleading
+
+**The OLS regression of lwage on educ might not give us the causal effect of education. Name
+two specific reasons why people with more education might earn more even if education itself
+had no effect.**
+
+```{r}
+
+```
