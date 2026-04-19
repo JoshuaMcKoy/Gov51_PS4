@@ -1,0 +1,33 @@
+---
+title: "gov51-ps4"
+author: "Joshua Stewart"
+format: pdf
+editor: visual
+---
+
+## Github: <https://github.com/JoshuaMcKoy/Gov51_PS4>
+
+# 1 Setup and Exploration (10 points)
+
+## 1.1 Load packages and data
+
+**Load the tidyverse, estimatr, and modelsummary packages. Then load the dataset from
+data/card1995.csv**
+
+```{r}
+library(tidyverse)
+library(estimatr)
+library(modelsummary)
+
+card <- read_csv("data/raw/card1995.csv")
+```
+
+## 1.2 Describe the data
+
+**How many observations are in the dataset? What is the unit of observation?**
+
+```{r}
+nrow(card)
+```
+
+There are 3,010 observations in the dataset. The unit of observation are individuals
