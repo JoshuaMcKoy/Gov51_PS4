@@ -70,10 +70,8 @@ Given that log wage seems to increase as years of education increases, the scatt
 
 ## 1.5 Why OLS might be misleading
 
-**The OLS regression of lwage on educ might not give us the causal effect of education. Name
-two specific reasons why people with more education might earn more even if education itself
-had no effect.**
+**The OLS regression of lwage on educ might not give us the causal effect of education. Name two specific reasons why people with more education might earn more even if education itself had no effect.**
 
-```{r}
+People with more education might earn more even if education itself had no effect because of their inherent disposition (e.g., more "hard working" people may be more likely to earn higher wages with or without education, though their ability may motivate them to attain education).
 
-```
+Second, people from wealthier backgrounds may have more resources, allowing for them to stay in school longer, while providing them with better job opportunities and their family's network. This would suggest that this effect could be a product of familial advantages instead of a simple correlation between education and wage.
