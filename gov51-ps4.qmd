@@ -101,6 +101,7 @@ first_stage <- lm_robust(
   se_type = "HC2")
 
 summary(first_stage)
+coef(first_stage)["nearc4"]
 ```
 
 The coefficient for nearc4 is 0.327, which means that people who grew up near a 4-year college obtained approximately 0.33 more years of education on years, holding all variables constant. The standard error is 0.080, and the t-value is 4.061.
@@ -145,3 +146,41 @@ card %>%
 ```
 
 The two groups are not balanced. The imbalance tells us that people who grew up near a college are more likely to live in urban areas and less likely to be from the South. These differences suggest that proximity to a college is correlated with observable characteristics, indicating that the instrument may not beas good-as-randomly assigned.
+
+# 3 The Wald Estimator (15 points)
+
+**The simplest IV estimate is the Wald estimator: the reduced-form effect divided by the
+first-stage effect.**
+
+## 3.1 Compute the reduced form
+
+**Run the reduced form regression: regress lwage directly on nearc4 (without educ, but
+including the same controls as the first stage). Report the coefficient on nearc4 and interpret
+it: what does it tell us about how proximity to a college relates to wages?**
+
+```{r}
+model_reduc <- lm(lwage ~ nearc4 + black + smsa + south + exper + married + age + fatheduc + motheduc + IQ, data = card)
+summary(model_reduc)
+coef(model_reduc)["nearc4"]
+names(card)
+```
+
+The coefficient on nearc4 is 0.0037, which indicates that individuals who grew up near a 4-year college earn about 0.37% higher wages, on average, holding other factors constant. That said, the p-value is quite high (0.862), which demonstrates that the data is not statistically significant. This suggests that proximity to college does not have a meaningful direct relationship with wages, and any effect is likely operating through increased educational attainment rather than directly impacting earnings.
+
+## 3.2 Calculate the Wald estimator by hand
+
+**Using the first-stage coefficient from Section 2.2 and the reduced-form coefficient from Section
+3.1, compute the Wald estimator by hand. Show your calculation.**
+
+```{r}
+coef(model_reduc)["nearc4"]/coef(first_stage)["nearc4"]
+```
+
+The Wald estimator is 0.0114, meaning that one additional year of education increases log wages by about 0.0114, or roughly 1.14%.
+
+## 3.3 Interpret the Wald estimator
+
+**Interpret your Wald estimate in a sentence. What does it say about the effect of one additional
+year of education on wages?**
+
+The Wald estimator means that one additional year of education increases log wages by baout 0.0114, or roughly 1.14%.
