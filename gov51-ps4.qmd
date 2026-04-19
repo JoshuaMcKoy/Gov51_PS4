@@ -75,3 +75,73 @@ Given that log wage seems to increase as years of education increases, the scatt
 People with more education might earn more even if education itself had no effect because of their inherent disposition (e.g., more "hard working" people may be more likely to earn higher wages with or without education, though their ability may motivate them to attain education).
 
 Second, people from wealthier backgrounds may have more resources, allowing for them to stay in school longer, while providing them with better job opportunities and their family's network. This would suggest that this effect could be a product of familial advantages instead of a simple correlation between education and wage.
+
+# 2 The Instrument: College Proximity (25 points)
+
+## 2.1 What the instrument measures
+
+**The variable nearc4 equals 1 if the respondent grew up near a 4-year college. What share of
+respondents in this sample grew up near a 4-year college?**
+
+```{r}
+nrow(card %>% filter(nearc4 == 1))
+nrow(card %>% filter(nearc4 == 1)) / nrow(card)
+```
+
+2,052 individuals, which is 68.2% of the respondents in this sample, grew up near a 4-year college.
+
+## 2.2 Relevance: does proximity affect education?
+
+**The first condition for a valid instrument is relevance: the instrument must be correlated with the endogenous variable (education). Run the following regression — the first stage — and report the coefficient on nearc4 along with its standard error and t-statistic.**
+
+```{r}
+first_stage <- lm_robust(
+  educ ~ nearc4 + black + smsa + south + exper + expersq + married, 
+  data = card, 
+  se_type = "HC2")
+
+summary(first_stage)
+```
+
+The coefficient for nearc4 is 0.327, which means that people who grew up near a 4-year college obtained approximately 0.33 more years of education on years, holding all variables constant. The standard error is 0.080, and the t-value is 4.061.
+
+## 2.3 Checking instrument strength
+
+**Report the t-statistic on nearc4 from the first-stage regression. Compute the first-stage F-statistic as 𝐹 = 𝑡2.**
+
+**Is your instrument strong? (Rule of thumb: F \> 10 suggests a strong instrument.) Why does instrument strength matter for the reliability of the 2SLS estimate?**
+
+```{r}
+4.0607488^2
+```
+
+The first-stage F is approximately 16.49. Given that 16.49 is greater than 10, the instrument would be considered strong. Instrument strength matters for the reliability of the 2SLS estimate because if the instrument is weak, the 2SLS estimate could be biased.
+
+## 2.4 Exclusion restriction
+
+**The second condition for a valid instrument is the exclusion restriction: college proximity must affect wages only through its effect on education — not through any other channel**
+
+**(a) State the exclusion restriction formally: what must be true about the relationship between nearc4 and lwage once we control for education?**
+
+The exclusion restriction requires that, after controlling for education and other variables, nearc4 has no direct effect on wages. This means that proximity to a college affects wages only through its impact on education.
+
+**b) Can you think of a way the exclusion restriction might be violated — that is, a reason why growing up near a college might affect your wages for reasons other than more education? Be specific.**
+
+The exclusion restriction might be violated if growing up near a college is associated with better local labor market conditions, for some reason. For example, areas with colleges may have more job opportunities or higher wages because of union strikes, which may direclty increase earnings even without additional education.
+
+## 2.5 Balance check
+
+**If the instrument is as-good-as-randomly assigned, respondents who grew up near a college should look similar on pre-treatment characteristics to those who did not.**
+
+**Compute the mean black, smsa, and south for the two groups (nearc4 == 0 and nearc4 == 1). Are the groups balanced? What does any imbalance tell you about the instrument?**
+
+```{r}
+card %>%
+  group_by(nearc4) %>%
+  summarize(
+    mean_black = mean(black, na.rm = TRUE),
+    mean_smsa  = mean(smsa, na.rm = TRUE),
+    mean_south = mean(south, na.rm = TRUE))
+```
+
+The two groups are not balanced. The imbalance tells us that people who grew up near a college are more likely to live in urban areas and less likely to be from the South. These differences suggest that proximity to a college is correlated with observable characteristics, indicating that the instrument may not beas good-as-randomly assigned.
