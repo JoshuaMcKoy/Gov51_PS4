@@ -159,13 +159,13 @@ including the same controls as the first stage). Report the coefficient on nearc
 it: what does it tell us about how proximity to a college relates to wages?**
 
 ```{r}
-model_reduc <- lm(lwage ~ nearc4 + black + smsa + south + exper + married + age + fatheduc + motheduc + IQ, data = card)
+model_reduc <- lm(lwage ~ nearc4 + black + smsa + south + exper + expersq + married, data = card)
 summary(model_reduc)
 coef(model_reduc)["nearc4"]
 names(card)
 ```
 
-The coefficient on nearc4 is 0.0037, which indicates that individuals who grew up near a 4-year college earn about 0.37% higher wages, on average, holding other factors constant. That said, the p-value is quite high (0.862), which demonstrates that the data is not statistically significant. This suggests that proximity to college does not have a meaningful direct relationship with wages, and any effect is likely operating through increased educational attainment rather than directly impacting earnings.
+The coefficient on nearc4 is 0.041, which indicates that individuals who grew up near a 4-year college earn about 4.1% higher wages, on average, holding other factors constant. That said, the p-value is quite low (0.0146), which demonstrates that the data is statistically significant. This suggests that proximity to college has a meaningful direct relationship with wages, and any effect is likely not operating through increased educational attainment rather than directly impacting earnings.
 
 ## 3.2 Calculate the Wald estimator by hand
 
@@ -176,11 +176,136 @@ The coefficient on nearc4 is 0.0037, which indicates that individuals who grew u
 coef(model_reduc)["nearc4"]/coef(first_stage)["nearc4"]
 ```
 
-The Wald estimator is 0.0114, meaning that one additional year of education increases log wages by about 0.0114, or roughly 1.14%.
+The Wald estimator is 0.0114, meaning that one additional year of education increases log wages by about 0.1249, or roughly 12.49%.
 
 ## 3.3 Interpret the Wald estimator
 
 **Interpret your Wald estimate in a sentence. What does it say about the effect of one additional
 year of education on wages?**
 
-The Wald estimator means that one additional year of education increases log wages by baout 0.0114, or roughly 1.14%.
+The Wald estimator means that one additional year of education increases log wages by about 0.125, or roughly 12.5%.
+
+# 4 OLS vs. 2SLS (35 points)
+
+## 4.1 OLS estimate
+
+**Run OLS of lwage on educ and the controls. Report the coefficient on educ.**
+
+```{r}
+ols <- lm_robust(lwage ~ educ + black + smsa + south + exper + expersq + married,
+                 data = card, 
+                 se_type = "HC2")
+summary(ols)
+coef(ols)["educ"]
+```
+
+The coefficient of education in the OLS regression model is 0.071, which implies that one additional year of education is associated with approximately a 7.1% increase in wages, holding other factors constant.
+
+## 4.2 2SLS estimate
+
+**Run the 2SLS regression using iv_robust() from estimatr. The formula syntax separates
+the structural equation (left of \|) from the first-stage instruments (right of \|):**
+
+```{r}
+iv <- iv_robust(lwage ~ educ + black + smsa + south + exper + expersq + married | nearc4 + black + smsa + south + exper + expersq + married,
+                data = card, 
+                se_type = "HC2")
+summary(iv)
+```
+
+**Report the coefficient on educ. Does it match your Wald estimate from Section 3.2?**
+
+The coefficient on education is 0.125, which matches my previous Wald estimate (0.125).
+
+## 4.3 Side-by-side comparison
+
+**Display both the OLS and 2SLS estimates in a single regression table using modelsummary().
+Keep only the rows for educ and the model statistics (N, R²).**
+
+```{r}
+modelsummary(list("OLS" = ols, "2SLS" = iv),
+             coef_map = c("educ" = "Years of Education"),
+             gof_map = c("nobs", "r.squared"))
+```
+
+## 4.4 Why do OLS and 2SLS differ?
+
+**The OLS and 2SLS estimates of the return to education are likely to differ. Answer the
+following:**
+
+**(a) Which is larger — OLS or 2SLS?**
+
+The 2SLS estimate is larger.
+
+**(b) Card (1995) interprets the finding that 2SLS \> OLS as evidence of downward bias in OLS. What could cause OLS to underestimate the return to education? (Hint: think about measurement error in educ, or about who the compliers are.)**
+
+One reason OLS may underestimate the return to education is measurement error in education, which could bias the OLS estimate toward zero. Additionally, the IV estimate identifies the effect for compliers, who may inherently experience larger returns to education than the average individual, making the 2SLS estimate larger than OLS.
+
+**(c) Which estimate is more credible as a causal estimate of the effect of education on wages?
+Explain briefly.**
+
+The 2SLS estimate is more credible as a causal estimate because it uses proximity to college as an instrument for education, helping to address omitted variable bias and measurement error. In contrast, the OLS estimate may be biased due to unobserved factors like ability or family background.
+
+## 4.5 Adding IQ as a control
+
+**The dataset includes IQ scores for a subset of respondents.**
+
+**(a) Run OLS of lwage on educ, IQ, and all other controls. How does including IQ change the OLS coefficient on educ?**
+
+```{r}
+ols_iq <- lm_robust(lwage ~ educ + IQ + black + smsa + south + exper + expersq + married,
+                    data = card,
+                    se_type = "HC2")
+
+summary(ols_iq)
+coef(ols_iq)["educ"]
+```
+
+Including the IQ lowers the OLS coefficeint on education, which makes sense given that the IQ variable absorbs some fo the explanatory power. The new education coefficient is 0.0676, which suggests that one additional year of education is associated with approximately a 6.76% increase in wages, holding other factors constant.
+
+**(b) Now run 2SLS including IQ. Does the 2SLS estimate change substantially when IQ is added?**
+
+```{r}
+SLS_iq <- iv_robust(lwage ~ educ + IQ + black + smsa + south + exper + expersq + married | nearc4 + IQ + black + smsa + south + exper + expersq + married,
+                data = card, 
+                se_type = "HC2")
+summary(SLS_iq)
+coef(iv)["educ"]
+coef(SLS_iq)["educ"]
+```
+
+The 2SLS estimate including IQ decreases the coefficicent of educ froom 0.1249 to 0.1094.
+
+**(c) What does the comparison between part (a) and part (b) suggest about the source of the discrepancy between OLS and IV?**
+
+Including IQ slightly reduces both the OLS and 2SLS estimates of the return to education. However, the gap between the OLS and IV estimates remains large even after controlling for IQ. This suggests that differences in ability, as measured by IQ, are not the primary source of the discrepancy between OLS and IV.
+
+# 5 Interpretation and LATE (15 points)
+
+## 5.1 Who are the compliers?
+
+**In a randomized experiment, the ATE averages over everyone. But IV estimates a Local Average Treatment Effect (LATE) — the average effect for compliers: units whose treatment status changes when the instrument changes.**
+
+**In this context, who are the compliers? Describe them in concrete terms: what type of
+person’s educational attainment was increased because they happened to grow up near a 4-
+year college?**
+
+In this context, the compliers are people who decision to attend college is infuenced by their proximity to a college. For example, they are the type of people who would not have attended college if they had not grown up next to one, but who do attend college because of their proximity.
+
+## 5.2 Write the LATE interpretation
+
+**Write a single careful sentence interpreting the 2SLS coefficient as a LATE. Your sentence
+should specify:
+(i) The causal effect being measured
+(ii) For which specific group of people
+(iii) What source of variation identifies it**
+
+The 2SLS coefficient estimates the causal effect of an additional year of education on wages for individuals whose decision to attend school are influenced by their proximity to a 4-year college, with identification coming from variation in education generated by growing up near versus far from a college.
+
+## 5.3 External validity
+
+**Card finds a 2SLS estimate around 12–13% return to each additional year of education. Is this LATE likely to be the same as the ATE (the return for the average person in the sample)?**
+
+**Think about whether the compliers — men who went to more school because they happened to live near a college — are likely to have higher or lower returns to education than the typical person. Explain your reasoning.**
+
+My assumption is that this LATE is unlikely to be the same as the ATE, given that the LATE only applies to compliers rather than the entire population. Compliers are unqiue in the sense that they are likely on the margin of attending college and may encounter higher costs or constraints, so the additional education they receive could generate relatively larger returns compared to the average person. Thus, the 2SLS estimate may overstate the return to education for the broader population.
